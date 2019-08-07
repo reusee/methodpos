@@ -2,9 +2,11 @@ package main
 
 import (
 	"fmt"
+	"go/ast"
 	"go/types"
 
 	"github.com/reusee/e/v2"
+	"golang.org/x/tools/go/ast/astutil"
 	"golang.org/x/tools/go/packages"
 )
 
@@ -46,5 +48,19 @@ func main() {
 	pt("begin at %v\n", beginPos)
 	endPos := pkg.Fset.Position(method.Scope().End())
 	pt("end at %v\n", endPos)
+
+	comments := func() *ast.CommentGroup {
+		for _, file := range pkg.Syntax {
+			path, _ := astutil.PathEnclosingInterval(file, method.Pos(), method.Pos())
+			for _, node := range path {
+				decl, ok := node.(*ast.FuncDecl)
+				if ok {
+					return decl.Doc
+				}
+			}
+		}
+		return nil
+	}()
+	pt("comments begin at %v\n", pkg.Fset.Position(comments.Pos()))
 
 }
